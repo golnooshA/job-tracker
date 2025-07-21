@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:job_tracker/presentation/pages/activity_page.dart';
-import 'package:job_tracker/presentation/pages/companies_page.dart';
-import 'package:job_tracker/presentation/pages/profile_page.dart';
+import 'package:job_tracker/presentation/pages/home_page.dart';
 
 
 void main() {
@@ -16,7 +14,7 @@ class JobApp extends StatelessWidget {
     return MaterialApp(
       title: 'Job App UI',
       debugShowCheckedModeBanner: false,
-      home: const ProfilePage(),
+      home: const HomePage(),
     );
   }
 }

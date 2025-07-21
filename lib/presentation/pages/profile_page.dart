@@ -66,12 +66,12 @@ class ProfilePage extends StatelessWidget {
                     subtitle: 'Ringtone, Message, Notification',
                   ),
 
-                  MenuItem(
-                    icon: Icons.help_outline,
-                    title: 'Help',
-                    subtitle: 'Contact Us',
-                    onTap: () {},
-                  ),
+                  // MenuItem(
+                  //   icon: Icons.help_outline,
+                  //   title: 'Help',
+                  //   subtitle: 'Contact Us',
+                  //   onTap: () {},
+                  // ),
 
                   MenuItem(
                     icon: Icons.info_outline,
