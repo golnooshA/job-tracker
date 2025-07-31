@@ -1,46 +1,114 @@
 import 'package:flutter/material.dart';
 
-class DesignConfig {
-  static const Color primaryColor = Color(0xFFfb7756);
+abstract class DesignConfig {
+  const DesignConfig();
 
-  static const Color bottomNavigation = Colors.grey;
-  static const Color bottomNavigationBackground = Color(0xFFe3f6f5);
-  static const Color deleteCart = Color(0xFFe74645);
-  static const Color rating = Colors.amber;
-  static const Color buttonTextColor = Colors.white;
+  static DesignConfig? _current;
 
-  static const Color shadowColor = Colors.black26;
-  static const Color textColor = Colors.black;
-  static const Color subTextColor = Colors.black54;
-  static const Color lightTextColor = Colors.grey;
+  static DesignConfig get current {
+    if (_current == null) {
+      throw Exception('DesignConfig is not set. Call setDesignConfig() first.');
+    }
+    return _current!;
+  }
 
-  static const Color appBarTitleColor = Colors.black;
-  static const Color appBarBackgroundColor = Colors.white;
-  static const Color backgroundColor = Colors.white;
-  static const Color lightWhite = Colors.white70;
+  static void setDesignConfig(DesignConfig designConfig) {
+    _current = designConfig;
+  }
 
-  static const Color unSelectedIcon = Colors.black54;
-  static const Color selectedIcon = Colors.black;
+  // Colors
+  Color get primaryColor;
 
-  static const Color borderColor = Color(0xEEEEEEFF);
+  Color get backgroundColor;
 
-  static const double appBarTitleFontSize = 26;
-  static const double titleSize = 28;
-  static const double subTitleSize = 24;
-  static const double headerSize = 18;
-  static const double textSize = 16;
-  static const double subTextSize = 14;
-  static const double tinyTextSize = 12;
+  Color get buttonTextColor;
 
-  static const double iconSize = 32;
-  static const double iconSmallSize = 18;
+  Color get buttonBlueColor;
 
+  Color get buttonRedColor;
 
-  static const String fontFamily = 'Roboto';
+  Color get buttonGreenColor;
 
-  static const FontWeight light = FontWeight.w400;
-  static const FontWeight semiBold = FontWeight.w600;
+  Color get buttonLightGrayColor;
 
+  Color get buttonDarkGrayColor;
 
-  static final BorderRadiusGeometry border = BorderRadius.circular(5);
+  Color get textFieldColor;
+
+  Color get borderColor;
+
+  Color get textColor;
+
+  Color get subTextColor;
+
+  Color get darkGrayColor;
+
+  Color get lightGrayColor;
+
+  Color get titleColor;
+
+  Color get progressColor;
+
+  Color get levelColor;
+
+  Color get falseColor;
+
+  Color get trueColor;
+
+  Color get secondaryAppBarColor;
+
+  Color get splashColor;
+
+  Color get highlightColor;
+
+  Color get appBarOptionsColor;
+
+  Color get primaryBackgroundColor;
+
+  Color get appColor;
+
+  Color get appBarColor;
+
+  Color get lineColor;
+
+  Color get orangeColor;
+
+  Color get errorColor;
+
+  Color get menuTextColor;
+
+  Color get pinkColor;
+
+  Color get dialogColor;
+
+  // Font Sizes
+  final double tinyFontSize = 12;
+  final double buttonFontSize = 16;
+  final double textFontSize = 16;
+  final double subtitleFontSize = 24;
+  final double subTextFontSize = 14;
+  final double titleFontSize = 28;
+  final double mediumFontSize = 18;
+  final double bigFontSize = 28;
+  final double bigNumber = 40;
+  final double veryBigFontSize = 80;
+  final double appBarTextFontSize = 24;
+
+  // Font Family
+  final String fontFamily = 'Roboto';
+
+  // Font Weight
+  final FontWeight light = FontWeight.w400;
+  final FontWeight semiBold = FontWeight.w600;
+
+  // Border Radius
+  final BorderRadius cartBorderRadius = const BorderRadius.all(
+    Radius.circular(10),
+  );
+  final BorderRadius buttonBorderRadius = const BorderRadius.all(
+    Radius.circular(10),
+  );
+  final BorderRadius circleButtonBorderRadius = const BorderRadius.all(
+    Radius.circular(500),
+  );
 }

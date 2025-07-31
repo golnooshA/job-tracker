@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/design_config.dart';
+import '../../services/notification_service.dart';
 import '../widgets/app_bar_builder.dart';
+import '../widgets/bottom_navigation.dart';
 import '../widgets/switch_tile.dart';
-import '../widgets/text_list_tile.dart';
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
@@ -16,117 +18,100 @@ class _NotificationPageState extends State<NotificationPage> {
   bool newJobNotification = true;
   bool appliedStatusNotification = true;
 
-  bool messageNotification = true;
-  bool reminders = true;
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
 
-  bool sound = true;
-  bool vibrate = true;
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      pushNotification = prefs.getBool('pushNotification') ?? true;
+      newJobNotification = prefs.getBool('newJobNotification') ?? true;
+      appliedStatusNotification = prefs.getBool('appliedStatusNotification') ?? true;
+    });
+  }
+
+  Future<void> _saveSetting(String key, bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool(key, value);
+  }
+
+  void _handleSwitchChange(String key, bool value, String title, String message) {
+    setState(() {
+      switch (key) {
+        case 'pushNotification':
+          pushNotification = value;
+          break;
+        case 'newJobNotification':
+          newJobNotification = value;
+          break;
+        case 'appliedStatusNotification':
+          appliedStatusNotification = value;
+          break;
+      }
+    });
+
+    _saveSetting(key, value);
+
+    if (value) {
+      NotificationService.showTestNotification(title, message);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+
     return Scaffold(
+      backgroundColor: design.backgroundColor,
       appBar: AppBarBuilder(title: 'Notification'),
+      bottomNavigationBar: const BottomNavigation(currentIndex: 4),
       body: SafeArea(
         child: ListView(
           children: [
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
 
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'General Notification',
-                style: TextStyle(
-                  fontSize: DesignConfig.subTextSize,
-                  color: DesignConfig.subTextColor,
-                  fontFamily: DesignConfig.fontFamily,
-                  fontWeight: DesignConfig.light,
-                ),
-              ),
-            ),
-            SwitchTile(
-              title: "Push Notification",
-              value: pushNotification,
-              onChanged: (val) => setState(() => pushNotification = val),
-            ),
+            // SwitchTile(
+            //   title: "Push Notification",
+            //   value: pushNotification,
+            //   onChanged: (val) {
+            //     _handleSwitchChange(
+            //       'pushNotification',
+            //       val,
+            //       "Push Enabled",
+            //       "You’ll now receive push notifications.",
+            //     );
+            //   },
+            // ),
+
             SwitchTile(
               title: "New Job Notification",
               value: newJobNotification,
-              onChanged: (val) => setState(() => newJobNotification = val),
+              onChanged: (val) {
+                _handleSwitchChange(
+                  'newJobNotification',
+                  val,
+                  "New Jobs Enabled",
+                  "You'll now be notified when new jobs are posted.",
+                );
+              },
             ),
+
             SwitchTile(
               title: "Applied Status Notification",
               value: appliedStatusNotification,
-              onChanged: (val) => setState(() => appliedStatusNotification = val),
+              onChanged: (val) {
+                _handleSwitchChange(
+                  'appliedStatusNotification',
+                  val,
+                  "Status Updates Enabled",
+                  "You’ll now receive updates on your job applications.",
+                );
+              },
             ),
-            const Divider(height: 8, thickness: 6, color: DesignConfig.borderColor),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Text(
-                'Message Notification',
-                style: TextStyle(
-                  fontSize: DesignConfig.subTextSize,
-                  color: DesignConfig.subTextColor,
-                  fontFamily: DesignConfig.fontFamily,
-                  fontWeight: DesignConfig.light,
-                ),
-              ),
-            ),
-            SwitchTile(
-              title: "Message",
-              value: messageNotification,
-              onChanged: (val) => setState(() => messageNotification = val),
-            ),
-            SwitchTile(
-              title: "Reminders",
-              value: reminders,
-              onChanged: (val) => setState(() => reminders = val),
-            ),
-            const Divider(height: 8, thickness: 6, color: DesignConfig.borderColor),
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Text(
-                'App Notification',
-                style: TextStyle(
-                  fontSize: DesignConfig.subTextSize,
-                  color: DesignConfig.subTextColor,
-                  fontFamily: DesignConfig.fontFamily,
-                  fontWeight: DesignConfig.light,
-                ),
-              ),
-            ),
-            SwitchTile(
-              title: "Sound",
-              value: sound,
-              onChanged: (val) => setState(() => sound = val),
-            ),
-            TextListTile(
-              title: "Tone",
-              value: "Default",
-              onTap: () {}, // Add functionality if needed
-            ),
-
-            SwitchTile(
-              title: "Vibrate",
-              value: vibrate,
-              onChanged: (val) => setState(() => vibrate = val),
-            ),
-            const SizedBox(height: 24),
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _sectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontSize: DesignConfig.tinyTextSize,
-          fontWeight: DesignConfig.light,
-          color: DesignConfig.subTextColor,
-          fontFamily: DesignConfig.fontFamily,
         ),
       ),
     );

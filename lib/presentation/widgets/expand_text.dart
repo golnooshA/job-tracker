@@ -1,5 +1,4 @@
-import 'package:flutter/cupertino.dart';
-
+import 'package:flutter/material.dart';
 import '../../core/config/design_config.dart';
 
 class ExpandableText extends StatefulWidget {
@@ -16,6 +15,8 @@ class _ExpandableTextState extends State<ExpandableText> {
 
   @override
   Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -23,23 +24,24 @@ class _ExpandableTextState extends State<ExpandableText> {
           widget.text,
           maxLines: _expanded ? null : 5,
           overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontWeight: DesignConfig.light,
-            fontFamily: DesignConfig.fontFamily,
-            color: DesignConfig.subTextColor,
-            fontSize: DesignConfig.subTextSize,
+          style: TextStyle(
+            fontSize: design.subTextFontSize,
+            fontWeight: design.light,
+            fontFamily: design.fontFamily,
+            color: design.subTextColor,
             height: 1.5,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         GestureDetector(
           onTap: () => setState(() => _expanded = !_expanded),
           child: Text(
-            _expanded ? "Show less" : "Read more",
-            style: const TextStyle(
-              color: DesignConfig.primaryColor,
-              fontWeight: DesignConfig.semiBold,
-              fontSize: DesignConfig.subTextSize,
+            _expanded ? 'Show less' : 'Read more',
+            style: TextStyle(
+              fontSize: design.subTextFontSize,
+              fontWeight: design.semiBold,
+              color: design.primaryColor,
+              fontFamily: design.fontFamily,
             ),
           ),
         ),
@@ -47,4 +49,3 @@ class _ExpandableTextState extends State<ExpandableText> {
     );
   }
 }
-

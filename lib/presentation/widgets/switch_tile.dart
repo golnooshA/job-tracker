@@ -15,21 +15,23 @@ class SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+
     return SwitchListTile(
       title: Text(
         title,
-        style: const TextStyle(
-          fontWeight: DesignConfig.semiBold,
-          fontSize: DesignConfig.subTextSize,
-          fontFamily: DesignConfig.fontFamily,
-          color: DesignConfig.textColor,
+        style: TextStyle(
+          fontSize: design.subTextFontSize,
+          fontWeight: design.semiBold,
+          fontFamily: design.fontFamily,
+          color: design.textColor,
         ),
       ),
       value: value,
       onChanged: onChanged,
-      activeColor: DesignConfig.primaryColor,
-      activeTrackColor: DesignConfig.primaryColor.withOpacity(0.4),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20),
+      activeColor: design.primaryColor,
+      activeTrackColor: design.primaryColor.withOpacity(0.4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
     );
   }
 }

@@ -1,51 +1,53 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_tracker/presentation/pages/one_category_page.dart';
-
+import '../providers/category_provider.dart';
+import '../utils/icon_mapper.dart';
 import '../widgets/app_bar_builder.dart';
+import '../widgets/bottom_navigation.dart';
 import '../widgets/button_icon_category.dart';
 
-class CategoriesListPage extends StatelessWidget {
-  final categories = [
-    {'icon': Icons.design_services, 'label': 'Design'},
-    {'icon': Icons.code, 'label': 'Developer'},
-    {'icon': Icons.network_wifi, 'label': 'Network'},
-    {'icon': Icons.verified, 'label': 'Quality'},
-    {'icon': Icons.campaign, 'label': 'Marketing'},
-    {'icon': Icons.person, 'label': 'Secretary'},
-    {'icon': Icons.analytics, 'label': 'Analysis'},
-    {'icon': Icons.more_horiz, 'label': 'More'},
-  ];
-
-  CategoriesListPage({super.key});
+class CategoriesListPage extends ConsumerWidget {
+  const CategoriesListPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final categories = ref.watch(allCategoriesProvider);
+
     return Scaffold(
       appBar: AppBarBuilder(title: 'Categories'),
-      body: GridView.builder(
+      bottomNavigationBar: const BottomNavigation(currentIndex: 0),
+      body: Padding(
         padding: const EdgeInsets.all(16),
-        shrinkWrap: true,
-        itemCount: categories.length,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1,
-        ),
-        itemBuilder: (context, index) {
-          final item = categories[index];
-          return ButtonIconCategory(
-            icon: item['icon'] as IconData,
-            text: item['label'] as String,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) =>  OneCategoryPage()),
+        child: categories.when(
+          data: (data) => GridView.builder(
+            itemCount: data.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1,
+            ),
+            itemBuilder: (context, index) {
+              final category = data[index];
+              return ButtonIconCategory(
+                icon: getIconByName(category.iconName),
+                text: category.name,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OneCategoryPage(
+                      categoryId: category.id,
+                      categoryName: category.name,
+                    ),
+                  ),
+                ),
               );
             },
-          );
-        },
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('Error: $e')),
+        ),
       ),
     );
   }

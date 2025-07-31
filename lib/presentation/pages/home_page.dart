@@ -1,41 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_tracker/core/config/design_config.dart';
+import 'package:job_tracker/data/models/bookmarked_job.dart';
 import 'package:job_tracker/presentation/pages/categories_list_page.dart';
+import 'package:job_tracker/presentation/pages/job_detail_page.dart';
+import 'package:job_tracker/presentation/pages/notification_list_page.dart';
 import 'package:job_tracker/presentation/pages/recent_job_page.dart';
-import 'package:job_tracker/presentation/pages/recommended_page.dart';
 import 'package:job_tracker/presentation/widgets/banner.dart';
 import 'package:job_tracker/presentation/widgets/button_icon_category.dart';
-import 'package:job_tracker/presentation/widgets/job_card.dart';
+import 'package:job_tracker/presentation/widgets/job_card_date.dart';
 import 'package:job_tracker/presentation/widgets/title_section.dart';
-import '../widgets/icon_textfield.dart';
-import '../widgets/job_card_date.dart';
+import '../providers/category_provider.dart';
+import '../providers/job_provider.dart';
+import '../providers/notification_list_provider.dart';
+import '../utils/icon_mapper.dart';
+import '../widgets/bottom_navigation.dart';
+import 'one_category_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final categories = [
-      {'icon': Icons.design_services, 'label': 'Design'},
-      {'icon': Icons.code, 'label': 'Developer'},
-      {'icon': Icons.network_wifi, 'label': 'Network'},
-      {'icon': Icons.verified, 'label': 'Quality'},
-      {'icon': Icons.campaign, 'label': 'Marketing'},
-      {'icon': Icons.person, 'label': 'Secretary'},
-      {'icon': Icons.analytics, 'label': 'Analysis'},
-      {'icon': Icons.more_horiz, 'label': 'More'},
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final design = DesignConfig.current;
 
-    final searchCtrl = TextEditingController();
+    final categories = ref.watch(allCategoriesProvider);
+    final recentJobs = ref.watch(recentJobsProvider);
+    final notificationCount = ref.watch(notificationListProvider).length;
 
     return Scaffold(
+      bottomNavigationBar: const BottomNavigation(currentIndex: 0),
+      backgroundColor: design.backgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Column(
@@ -44,162 +46,187 @@ class HomePage extends StatelessWidget {
                       Text(
                         "Hello,",
                         style: TextStyle(
-                          fontFamily: DesignConfig.fontFamily,
-                          fontSize: DesignConfig.textSize,
-                          fontWeight: DesignConfig.light,
-                          color: DesignConfig.subTextColor,
+                          fontFamily: design.fontFamily,
+                          fontSize: design.textFontSize,
+                          fontWeight: design.light,
+                          color: design.subTextColor,
                         ),
                       ),
-
                       Text(
                         "Jack Fisher",
                         style: TextStyle(
-                          fontFamily: DesignConfig.fontFamily,
-                          fontSize: DesignConfig.headerSize,
-                          fontWeight: DesignConfig.semiBold,
-                          color: DesignConfig.textColor,
+                          fontFamily: design.fontFamily,
+                          fontSize: design.mediumFontSize,
+                          fontWeight: design.semiBold,
+                          color: design.textColor,
                         ),
                       ),
                     ],
                   ),
-                  Icon(
-                    Icons.notifications_none,
-                    color: DesignConfig.unSelectedIcon,
-                    size: DesignConfig.iconSize,
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none),
+                        color: design.darkGrayColor,
+                        iconSize: 28,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const NotificationListPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      if (notificationCount > 0)
+                        Positioned(
+                          right: 6,
+                          top: 6,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: design.errorColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '$notificationCount',
+                              style: TextStyle(
+                                fontFamily: design.fontFamily,
+                                fontSize: design.tinyFontSize,
+                                fontWeight: design.semiBold,
+                                color: design.buttonTextColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
 
-              IconTextField(
-                controller: searchCtrl,
-                icon: Icons.search,
-                hintText: "Enter Keyword",
-                onChanged: (p0) {},
-              ),
-
-              const SizedBox(height: 20),
-
+              // Banners
               SizedBox(
                 height: 200,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
-                  children: [
+                  children: const [
                     BannerCard(image: 'assets/images/banner_1.png'),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     BannerCard(image: 'assets/images/banner_2.png'),
                   ],
                 ),
               ),
-
               const SizedBox(height: 20),
 
-              GridView.builder(
-                shrinkWrap: true,
-                itemCount: categories.length,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final item = categories[index];
-                  return ButtonIconCategory(
-                    icon: item['icon'] as IconData,
-                    text: item['label'] as String,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) =>  CategoriesListPage()),
+              // Categories
+              categories.when(
+                data: (data) {
+                  final visibleCategories = data.length > 7
+                      ? data.sublist(0, 7)
+                      : data;
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    itemCount: visibleCategories.length + 1,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                    const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1,
+                    ),
+                    itemBuilder: (context, index) {
+                      if (index == visibleCategories.length) {
+                        return ButtonIconCategory(
+                          icon: Icons.more_horiz,
+                          text: "More",
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const CategoriesListPage(),
+                            ),
+                          ),
+                        );
+                      }
+
+                      final item = visibleCategories[index];
+                      return ButtonIconCategory(
+                        icon: getIconByName(item.iconName),
+                        text: item.name,
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => OneCategoryPage(
+                              categoryId: item.id,
+                              categoryName: item.name,
+                            ),
+                          ),
+                        ),
                       );
                     },
                   );
                 },
+                loading: () => const CircularProgressIndicator(),
+                error: (e, _) => Text("Error: $e", style: TextStyle(color: design.errorColor)),
               ),
+
               const SizedBox(height: 20),
 
               TitleSection(
-                title: "Recommended for you",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RecommendedPage()),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 10),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: JobCard(
-                      companyLogo: 'assets/images/banner_1.png',
-                      companyName: 'Spotify',
-                      role: 'Project manager',
-                      location: 'Dubai, UAE',
-                      jobType: 'Full Time',
-                      applicants: 23,
-                      views: 784,
-                      onTap: () {},
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: JobCard(
-                      companyLogo: 'assets/images/banner_1.png',
-                      companyName: 'Spotify',
-                      role: 'Project manager',
-                      location: 'Dubai, UAE',
-                      jobType: 'Full Time',
-                      applicants: 23,
-                      views: 784,
-                      onTap: () {},
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-              TitleSection(title: "Recently Job Opening", onTap: () {
-                Navigator.push(
+                title: "Recently Job Opening",
+                onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const RecentlyJobPage()),
-                );
-              },
+                ),
               ),
-              const SizedBox(height: 10),
-              JobCardDate(
-                companyName: 'Dribble',
-                role: 'Project manager',
-                location: 'Dubai, UAE',
-                jobType: 'Full time',
-                description:
-                    'We are looking for Project Manager, you can apply here.\nGood multitask is a plus for this role.',
-                applicants: 64,
-                views: 344,
-                date: 'Jun 29, 2025',
-                companyLogo: 'assets/images/banner_1.png',
-                isBookmarked: false,
-                onTap: () {},
-              ),
-              JobCardDate(
-                companyName: 'Dribble',
-                role: 'Project manager',
-                location: 'Dubai, UAE',
-                jobType: 'Full time',
-                description:
-                'We are looking for Project Manager, you can apply here.\nGood multitask is a plus for this role.',
-                applicants: 64,
-                views: 344,
-                date: 'Jun 29, 2025',
-                companyLogo: 'assets/images/banner_1.png',
-                isBookmarked: false,
-                onTap: () {},
-              ),
+              const SizedBox(height: 4),
 
+              recentJobs.when(
+                data: (data) {
+                  final sortedJobs = data.toList()
+                    ..sort(
+                          (a, b) => b.publishedDate.compareTo(a.publishedDate),
+                    );
+
+                  return Column(
+                    children: sortedJobs.map((job) {
+                      final isBookmarked = BookmarkedJobs.contains(job);
+
+                      return JobCardDate(
+                        companyName: job.companyName,
+                        companyLogo: job.companyLogo,
+                        role: job.role,
+                        location: job.location,
+                        jobType: job.jobType,
+                        description: job.description,
+                        applicants: job.applicants,
+                        views: job.views,
+                        date: job.publishedDate,
+                        isBookmarked: isBookmarked,
+                        showBookmark: true,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => JobDetailPage(job: job),
+                            ),
+                          );
+                        },
+                        onIcon: () {
+                          if (isBookmarked) {
+                            BookmarkedJobs.remove(job);
+                          } else {
+                            BookmarkedJobs.add(job);
+                          }
+                          ref.invalidate(recentJobsProvider);
+                        },
+                      );
+                    }).toList(),
+                  );
+                },
+                loading: () => const CircularProgressIndicator(),
+                error: (e, _) => Text("Error: $e", style: TextStyle(color: design.errorColor)),
+              ),
             ],
           ),
         ),

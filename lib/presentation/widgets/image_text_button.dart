@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../core/config/design_config.dart';
 
 class ImageTextButton extends StatelessWidget {
@@ -16,27 +15,35 @@ class ImageTextButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+        padding: const EdgeInsets.all(12),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: DesignConfig.backgroundColor,
-          borderRadius: DesignConfig.border,
-          border: Border.all(color: DesignConfig.lightTextColor),
+          color: design.backgroundColor,
+          borderRadius: design.buttonBorderRadius,
+          border: Border.all(color: design.borderColor),
         ),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            CircleAvatar(radius: 16, backgroundImage: AssetImage(image)),
-            const SizedBox(width: 12),
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: NetworkImage(image),
+              backgroundColor: Colors.transparent,
+            ),
+            const SizedBox(height: 12),
             Text(
               text,
-              style: const TextStyle(
-                color: DesignConfig.textColor,
-                fontSize: DesignConfig.textSize,
-                fontWeight: DesignConfig.light,
-                fontFamily: DesignConfig.fontFamily,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: design.textFontSize,
+                fontWeight: design.light,
+                fontFamily: design.fontFamily,
+                color: design.textColor,
               ),
             ),
           ],

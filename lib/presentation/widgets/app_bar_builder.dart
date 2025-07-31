@@ -13,17 +13,21 @@ class AppBarBuilder extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+
     return AppBar(
       automaticallyImplyLeading: automaticallyImplyLeading,
-      backgroundColor: DesignConfig.appBarBackgroundColor,
+      backgroundColor: design.appBarColor,
+      elevation: 0,
       centerTitle: true,
+      iconTheme: IconThemeData(color: design.textColor),
       title: Text(
         title,
         style: TextStyle(
-          color: DesignConfig.textColor,
-          fontSize: DesignConfig.headerSize,
-          fontFamily: DesignConfig.fontFamily,
-          fontWeight: DesignConfig.semiBold,
+          color: design.textColor,
+          fontSize: design.mediumFontSize,
+          fontWeight: design.semiBold,
+          fontFamily: design.fontFamily,
         ),
       ),
     );

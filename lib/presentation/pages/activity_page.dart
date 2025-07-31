@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:job_tracker/presentation/widgets/no_result.dart';
 import '../../core/config/design_config.dart';
+import '../../data/models/applied_jobs.dart';
+import '../../data/models/bookmarked_job.dart';
 import '../widgets/app_bar_builder.dart';
+import '../widgets/bottom_navigation.dart';
 import '../widgets/job_card_date.dart';
+import 'job_detail_page.dart';
 
 class ActivityPage extends StatefulWidget {
   const ActivityPage({super.key});
@@ -10,7 +15,8 @@ class ActivityPage extends StatefulWidget {
   State<ActivityPage> createState() => _ActivityPageState();
 }
 
-class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderStateMixin {
+class _ActivityPageState extends State<ActivityPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -27,86 +33,142 @@ class _ActivityPageState extends State<ActivityPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+
     return Scaffold(
-      appBar: AppBarBuilder(title: 'Activity'),
-      body: SafeArea(
-        child: Column(
-          children: [
-            TabBar(
-              controller: _tabController,
-              indicatorColor: DesignConfig.primaryColor,
-              labelColor: DesignConfig.primaryColor,
-              unselectedLabelColor: DesignConfig.lightTextColor,
-              indicatorWeight: 2.5,
-              indicatorSize: TabBarIndicatorSize.tab,
-              labelStyle: const TextStyle(
-                fontWeight: DesignConfig.semiBold,
-                fontFamily: DesignConfig.fontFamily,
-                color: DesignConfig.lightTextColor,
-                fontSize: DesignConfig.subTextSize,
+        appBar: AppBarBuilder(title: 'Activity'),
+        backgroundColor: design.backgroundColor,
+        bottomNavigationBar: const BottomNavigation(currentIndex: 3),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TabBar(
+                  controller: _tabController,
+                  indicatorColor: design.primaryColor,
+                  labelColor: design.primaryColor,
+                  unselectedLabelColor: design.darkGrayColor,
+                  indicatorWeight: 2.5,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelStyle: TextStyle(
+                    fontWeight: design.semiBold,
+                    fontFamily: design.fontFamily,
+                    fontSize: design.subTextFontSize,
+                  ),
+                  tabs: const [
+                    Tab(text: 'Applied'),
+                    Tab(text: 'Saved'),
+                  ],
+                ),
               ),
-              tabs: const [
-                Tab(text: 'Applied'),
-                Tab(text: 'Saved'),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildAppliedTab(),
-                  _buildSavedTab(),
-                ],
+              const SizedBox(height: 8),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildAppliedTab(),
+                    _buildSavedTab(),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        )
     );
-  }
+    }
 
   Widget _buildAppliedTab() {
-    return SingleChildScrollView(
+    final jobs = AppliedJobs.items;
+    if (jobs.isEmpty) {
+      return const NoResult(
+        image: 'assets/images/no_job.png',
+        text: 'There are no jobs',
+      );
+    }
+
+    return ListView.separated(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: List.generate(2, (index) => JobCardDate(
-          companyName: 'Spotify',
-          role: 'Backend Engineer',
-          location: 'Amsterdam',
-          jobType: 'Full-Time',
-          description: 'Join our backend team and scale services.',
-          applicants: 120,
-          views: 500,
-          date: 'Jul 2, 2025',
-          companyLogo: 'assets/images/banner_2.png',
-          showBookmark: false,
-          onTap: () {},
-        ),),
-      ),
+      itemCount: jobs.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, index) {
+        final job = jobs[index];
+        return JobCardDate(
+          companyName: job.companyName,
+          role: job.role,
+          location: job.location,
+          jobType: job.jobType,
+          description: job.description,
+          applicants: job.applicants,
+          views: job.views,
+          date: job.publishedDate,
+          companyLogo: job.companyLogo,
+          showBookmark: true,
+          isBookmarked: BookmarkedJobs.contains(job),
+          onIcon: () {
+            setState(() {
+              if (BookmarkedJobs.contains(job)) {
+                BookmarkedJobs.remove(job);
+              } else {
+                BookmarkedJobs.add(job);
+              }
+            });
+          },
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => JobDetailPage(job: job),
+              ),
+            );
+            setState(() {});
+          },
+        );
+      },
     );
   }
 
-
   Widget _buildSavedTab() {
-    return ListView.builder(
+    final jobs = BookmarkedJobs.items;
+    if (jobs.isEmpty) {
+      return const NoResult(
+        image: 'assets/images/no_job.png',
+        text: 'There are no jobs',
+      );
+    }
+
+    return ListView.separated(
       padding: const EdgeInsets.all(16),
-      itemCount: 10,
-      itemBuilder: (_, i) {
+      itemCount: jobs.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, index) {
+        final job = jobs[index];
         return JobCardDate(
-          companyName: 'Dribble',
-          role: 'Project manager',
-          location: 'Dubai, UAE',
-          jobType: 'Full time',
-          description:
-          'We are looking for Project Manager, you can apply here.\nGood multitask is a plus for this role.',
-          applicants: 64,
-          views: 344,
-          date: 'Jun 29, 2025',
-          companyLogo: 'assets/images/banner_1.png',
-          isBookmarked: false,
-          onTap: () {},
+          companyName: job.companyName,
+          role: job.role,
+          location: job.location,
+          jobType: job.jobType,
+          description: job.description,
+          applicants: job.applicants,
+          views: job.views,
+          date: job.publishedDate,
+          companyLogo: job.companyLogo,
+          showBookmark: true,
+          isBookmarked: true,
+          onIcon: () {
+            setState(() {
+              BookmarkedJobs.remove(job);
+            });
+          },
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => JobDetailPage(job: job),
+              ),
+            );
+            setState(() {});
+          },
         );
       },
     );

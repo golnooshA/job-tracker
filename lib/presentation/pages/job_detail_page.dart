@@ -1,221 +1,261 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:job_tracker/data/models/job.dart';
+import 'package:job_tracker/presentation/pages/web_view_page.dart';
+import 'package:job_tracker/presentation/providers/notification_list_provider.dart';
 import 'package:job_tracker/presentation/widgets/button_with_icon_row.dart';
 import '../../core/config/design_config.dart';
+import '../../data/models/applied_jobs.dart';
+import '../../data/models/bookmarked_job.dart';
+import '../../services/notification_service.dart';
 import '../widgets/app_bar_builder.dart';
+import '../widgets/bottom_navigation.dart';
 import '../widgets/bullet_list.dart';
 import '../widgets/expand_text.dart';
 import '../widgets/icon_with_text.dart';
 import '../widgets/section_title.dart';
 
-class JobDetailPage extends StatefulWidget {
-  const JobDetailPage({super.key});
+class JobDetailPage extends ConsumerStatefulWidget {
+  final Job job;
+  const JobDetailPage({super.key, required this.job});
 
   @override
-  State<JobDetailPage> createState() => _JobDetailPageState();
+  ConsumerState<JobDetailPage> createState() => _JobDetailPageState();
 }
 
-class _JobDetailPageState extends State<JobDetailPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _JobDetailPageState extends ConsumerState<JobDetailPage> {
+  bool _isApplied = false;
+  bool _isBookmarked = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _isApplied = AppliedJobs.contains(widget.job);
+    _isBookmarked = BookmarkedJobs.contains(widget.job);
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
+  Future<void> _applyToJob() async {
+    if (_isApplied) return;
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBarBuilder(title: ''),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            const CircleAvatar(
-              radius: 36,
-              backgroundImage: AssetImage('assets/images/banner_1.png'),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              "UI Designer",
-              style: TextStyle(
-                color: DesignConfig.textColor,
-                fontSize: DesignConfig.subTitleSize,
-                fontWeight: DesignConfig.semiBold,
-                fontFamily: DesignConfig.fontFamily,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text.rich(
-              TextSpan(
-                text: 'Dribble  •  ',
-                style: TextStyle(
-                  color: DesignConfig.subTextColor,
-                  fontSize: DesignConfig.textSize,
-                  fontWeight: DesignConfig.semiBold,
-                  fontFamily: DesignConfig.fontFamily,
-                ),
-                children: [
-                  TextSpan(
-                    text: 'Fulltime',
-                    style: TextStyle(
-                      color: DesignConfig.primaryColor,
-                      fontSize: DesignConfig.textSize,
-                      fontWeight: DesignConfig.semiBold,
-                      fontFamily: DesignConfig.fontFamily,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  IconWithText(
-                    icon: Icons.people,
-                    text: '80',
-                    iconColor: Colors.blue,
-                  ),
-                  IconWithText(
-                    icon: Icons.location_on,
-                    text: 'Yogyakarta',
-                    iconColor: Colors.green,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TabBar(
-                controller: _tabController,
-                indicatorColor: DesignConfig.primaryColor,
-                labelColor: DesignConfig.primaryColor,
-                unselectedLabelColor: DesignConfig.lightTextColor,
-                indicatorWeight: 2.5,
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelStyle: const TextStyle(
-                  fontWeight: DesignConfig.semiBold,
-                  fontFamily: DesignConfig.fontFamily,
-                  color: DesignConfig.lightTextColor,
-                  fontSize: DesignConfig.subTextSize,
-                ),
-                tabs: const [
-                  Tab(text: 'Job Details'),
-                  Tab(text: 'Company'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: Stack(
-                children: [
-                  TabBarView(
-                    controller: _tabController,
-                    children: [_jobDetailsView(), _CompanyView()],
-                  ),
+    AppliedJobs.add(widget.job);
+    setState(() => _isApplied = true);
 
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      color: Colors.white,
-                      padding: const EdgeInsets.all(20),
-                      child: ButtonWithIconRow(
-                        onTap: () {},
-                        onIcon: () {},
-                        buttonText: 'Apply Now',
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    final prefs = await SharedPreferences.getInstance();
+    final pushEnabled = prefs.getBool('pushNotification') ?? true;
+    final statusEnabled = prefs.getBool('appliedStatusNotification') ?? true;
+
+    final message = "You applied to ${widget.job.role} at ${widget.job.companyName}.";
+
+    if (pushEnabled && statusEnabled) {
+      ref.read(notificationListProvider.notifier).add(message);
+
+      Future.delayed(const Duration(seconds: 2), () {
+        NotificationService.showTestNotification(
+          "Application Sent",
+          message,
+        );
+      });
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WebViewPage(
+          url: widget.job.jobLink,
+          title: widget.job.role,
         ),
       ),
     );
   }
 
-  Widget _jobDetailsView() {
+  void _toggleBookmark() {
+    setState(() {
+      if (_isBookmarked) {
+        BookmarkedJobs.remove(widget.job);
+      } else {
+        BookmarkedJobs.add(widget.job);
+      }
+      _isBookmarked = !_isBookmarked;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+    final job = widget.job;
+
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBarBuilder(title: ''),
+        bottomNavigationBar: const BottomNavigation(currentIndex: 0),
+        backgroundColor: design.backgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 16),
+              CircleAvatar(
+                radius: 36,
+                backgroundImage: NetworkImage(job.companyLogo),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                job.role,
+                style: TextStyle(
+                  color: design.textColor,
+                  fontSize: design.subtitleFontSize,
+                  fontWeight: design.semiBold,
+                  fontFamily: design.fontFamily,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text.rich(
+                TextSpan(
+                  text: '${job.companyName}  •  ',
+                  style: TextStyle(
+                    color: design.subTextColor,
+                    fontSize: design.textFontSize,
+                    fontWeight: design.light,
+                    fontFamily: design.fontFamily,
+                  ),
+                  children: [
+                    TextSpan(
+                      text: job.jobType,
+                      style: TextStyle(
+                        color: design.primaryColor,
+                        fontSize: design.textFontSize,
+                        fontWeight: design.light,
+                        fontFamily: design.fontFamily,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    IconWithText(
+                      icon: Icons.people,
+                      text: '${job.applicants}',
+                      iconColor: design.buttonBlueColor,
+                    ),
+                    IconWithText(
+                      icon: Icons.location_on,
+                      text: job.location,
+                      iconColor: design.buttonGreenColor,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TabBar(
+                  indicatorColor: design.primaryColor,
+                  labelColor: design.primaryColor,
+                  unselectedLabelColor: design.darkGrayColor,
+                  indicatorWeight: 2.5,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelStyle: TextStyle(
+                    fontWeight: design.semiBold,
+                    fontFamily: design.fontFamily,
+                    fontSize: design.subTextFontSize,
+                  ),
+                  tabs: const [
+                    Tab(text: 'Job Details'),
+                    Tab(text: 'Company'),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Stack(
+                  children: [
+                    TabBarView(
+                      children: [
+                        _jobDetailsView(job),
+                        _companyView(job.companyAbout),
+                      ],
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        color: design.backgroundColor,
+                        padding: const EdgeInsets.all(20),
+                        child: ButtonWithIconRow(
+                          onTap: _isApplied ? null : _applyToJob,
+                          onIcon: _toggleBookmark,
+                          bookmarkIcon: _isBookmarked
+                              ? Icons.bookmark
+                              : Icons.bookmark_border,
+                          buttonText: _isApplied ? 'Applied' : 'Apply Now',
+                          buttonColor: _isApplied
+                              ? design.buttonLightGrayColor
+                              : design.primaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _jobDetailsView(Job job) {
+    final design = DesignConfig.current;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SectionTitle(title: "Descriptions"),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          const SectionTitle(title: "Description"),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
             child: Text(
-              "The good news is, currently Dribbble is opening job opportunities as UI Designers for designers to join us in developing and building Dribbble to be bigger and more advanced.",
+              job.description,
               style: TextStyle(
-                fontWeight: DesignConfig.light,
-                fontFamily: DesignConfig.fontFamily,
-                color: DesignConfig.subTextColor,
-                fontSize: DesignConfig.subTextSize,
+                fontWeight: design.light,
+                fontFamily: design.fontFamily,
+                color: design.subTextColor,
+                fontSize: design.subTextFontSize,
               ),
             ),
           ),
           const SizedBox(height: 16),
-          const SectionTitle(title: "Responsibilities"),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-            child: BulletList(
-              items: [
-                "Creating wireframes, UI and prototypes for mobile apps and websites",
-                "Manage UI assets and styleguides",
-                "Research design trends and competitor analysis",
-              ],
+          if (job.skills.isNotEmpty) ...[
+            const SectionTitle(title: "Skills Needed"),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20,vertical: 8),
+              child: BulletList(items: job.skills),
             ),
-          ),
-          const SizedBox(height: 16),
-          const SectionTitle(title: "Skills Needed"),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: BulletList(
-              items: [
-                "1+ years professional experience working on ui designing.",
-                "Proficient with Sketch, Figma, Photoshop, Illustrator. Bonus if you’ve used apps like Invision, Zeplin, Principle.",
-                "Ability to create high and low fidelity wireframes and prototypes.",
-                "Fast learner and is eager to pick up new skills.",
-                "Loves what they do, has opinions, works well in a team, and gets excited about users and design.",
-                "Has a solid and up-to-date understanding of best practices, design trends in web and mobile design.",
-              ],
-            ),
-          ),
+          ],
           const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  Widget _CompanyView() {
+  Widget _companyView(String about) {
     return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: const [
-          SectionTitle(title: "Descriptions"),
+        children: [
+          const SectionTitle(title: "Company Info"),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-            child: ExpandableText(
-              text:
-                  "The good news is, currently Dribbble is opening job opportunities as UI Designers for designers to join us in developing and building Dribbble to be bigger and more advanced. "
-                  "We offer a great team, creative freedom, and an opportunity to make real impact. "
-                  "We value design deeply and you'll work closely with our product and engineering teams. "
-                  "As a designer at Dribbble, you'll help shape the future of creative collaboration.",
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+            child: ExpandableText(text: about),
           ),
         ],
       ),

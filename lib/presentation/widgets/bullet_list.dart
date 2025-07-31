@@ -8,41 +8,42 @@ class BulletList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final design = DesignConfig.current;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: items
-          .map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "•  ",
-                    style: TextStyle(
-                      fontWeight: DesignConfig.semiBold,
-                      fontFamily: DesignConfig.fontFamily,
-                      color: DesignConfig.lightTextColor,
-                      fontSize: DesignConfig.headerSize,
-                      height: 1.4,
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      item,
-                      style: const TextStyle(
-                        fontWeight: DesignConfig.light,
-                        fontFamily: DesignConfig.fontFamily,
-                        color: DesignConfig.subTextColor,
-                        fontSize: DesignConfig.subTextSize,
-                      ),
-                    ),
-                  ),
-                ],
+      children: items.map((item) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "• ",
+                style: TextStyle(
+                  fontWeight: design.semiBold,
+                  fontFamily: design.fontFamily,
+                  color: design.subTextColor,
+                  fontSize: design.mediumFontSize,
+                  height: 1.4,
+                ),
               ),
-            ),
-          )
-          .toList(),
+              Expanded(
+                child: Text(
+                  item,
+                  style: TextStyle(
+                    fontWeight: design.light,
+                    fontFamily: design.fontFamily,
+                    color: design.subTextColor,
+                    fontSize: design.subTextFontSize,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }
