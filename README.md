@@ -62,7 +62,7 @@ A cross-platform job tracking app built with **Flutter** and **Riverpod**, desig
 
 <p align="center">
   <img src="assets/screenshots/dark/home.png" width="22%" />
-  <img src="assets/screenshots/dark/categories.png" width="22%" />
+  <img src="assets/screenshots/dark/category.png" width="22%" />
   <img src="assets/screenshots/dark/one_category.png" width="22%" />
   <img src="assets/screenshots/dark/recent.png" width="22%" />
 </p>
