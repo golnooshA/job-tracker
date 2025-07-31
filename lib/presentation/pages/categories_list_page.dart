@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:job_tracker/presentation/pages/one_category_page.dart';
+import '../../core/config/design_config.dart';
 import '../providers/category_provider.dart';
 import '../utils/icon_mapper.dart';
 import '../widgets/app_bar_builder.dart';
@@ -13,9 +14,11 @@ class CategoriesListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final categories = ref.watch(allCategoriesProvider);
+    final design = DesignConfig.current;
 
     return Scaffold(
       appBar: AppBarBuilder(title: 'Categories'),
+      backgroundColor: design.backgroundColor,
       bottomNavigationBar: const BottomNavigation(currentIndex: 0),
       body: Padding(
         padding: const EdgeInsets.all(16),

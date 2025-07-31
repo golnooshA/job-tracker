@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:job_tracker/presentation/widgets/app_bar_builder.dart';
 import 'package:job_tracker/presentation/widgets/job_card.dart';
 import '../widgets/bottom_navigation.dart';
-import 'job_detail_page.dart';
 
 class RecommendedPage extends StatelessWidget {
   const RecommendedPage({super.key});

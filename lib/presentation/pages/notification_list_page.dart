@@ -15,6 +15,8 @@ class NotificationListPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text("Notifications")),
+      backgroundColor: design.backgroundColor,
+
       body: notifications.isEmpty
           ? const NoResult(
         image: 'assets/images/no_notification.png',
