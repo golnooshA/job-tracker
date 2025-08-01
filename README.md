@@ -1,6 +1,6 @@
 # 📋 Job Tracker
 
-A cross-platform job tracking app built with **Flutter** and **Riverpod**, designed to help job seekers browse, filter, save, and manage job opportunities efficiently. The UI is fully responsive and supports both light and dark themes using a custom `DesignConfig`.
+A cross-platform job tracking app built with **Flutter** and **Riverpod**, designed to help users search, apply, and keep track of job applications. The app features intuitive UI, real-time interaction, and an offline-first experience using local state and storage.
 
 ---
 
