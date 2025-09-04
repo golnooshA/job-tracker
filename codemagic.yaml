@@ -28,4 +28,4 @@ workflows:
     publishing:
       email:
         recipients:
-          - ${CM_EMAIL}  
+          - "golnoosh.asady@gmail.com" 
